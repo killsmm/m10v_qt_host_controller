@@ -4,6 +4,15 @@
 
 const std::vector<float> SHUTTER_VALUE = {0.00025f, 0.0005f, 0.000625f, 0.0008f, 0.001f, 0.00125f, 0.0015625f, 0.002f, 0.004f, 0.008f, 0.016f, 0.032f};
 const std::vector<int> ISO_VALUE_INDEX = {0, 1, 2, 3, 4, 5, 6, 7};
+
+
+
+const std::vector<FLIP_MIRROR_MODE> FLIP_MIRROR_MODE_OPTIONS = {
+    FLIP_MIRROR_MODE_OFF,
+    FLIP_MIRROR_MODE_MIRROR,
+    FLIP_MIRROR_MODE_FLIP,
+    FLIP_MIRROR_MODE_FLIP_MIRROR
+};
 //const std::vector<int> ISO_VALUE_INDEX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
 
@@ -50,4 +59,21 @@ QNetworkReply *HttpCameraController::setShutter(float shutter_sec) {
 
 QNetworkReply *HttpCameraController::setSensorGain(float gain) {
     return cameraIfDirect(0x3, 0x7, *(uint32_t *)&gain);
+}
+
+QNetworkReply *HttpCameraController::setFlipMirrorMode(FLIP_MIRROR_MODE mode){
+    return cameraIfDirect(0x1, 0x24, mode);
+}
+
+
+QNetworkReply *HttpCameraController::setMShutter(bool m_shutter){
+    return cameraIfDirect(0xb, 0x7, m_shutter ? 1 : 0);
+}
+
+QNetworkReply *HttpCameraController::setEV(float ev){
+    return cameraIfDirect(0x3, 0x6, *(uint32_t *)&ev);
+}
+
+QNetworkReply *HttpCameraController::startPreview(){
+    return cameraIfDirect(0x0, 0xb, 0x2);
 }

@@ -53,6 +53,12 @@ typedef enum {
     E_FJ_MOVIE_VIDEO_SIZE_3150_2100 = 44,
 } E_FJ_MOVIE_VIDEO_SIZE;
 
+typedef enum {
+    FLIP_MIRROR_MODE_OFF,
+    FLIP_MIRROR_MODE_MIRROR,
+    FLIP_MIRROR_MODE_FLIP,
+    FLIP_MIRROR_MODE_FLIP_MIRROR
+}FLIP_MIRROR_MODE;
 
 extern const std::vector<float> SHUTTER_VALUE;
 extern const std::vector<int> ISO_VALUE_INDEX;
@@ -68,7 +74,12 @@ public:
     QNetworkReply *setISO(int index);
     QNetworkReply *setShutter(float shutter_sec);
     QNetworkReply *setSensorGain(float gain);
+    QNetworkReply *setMShutter(bool m_shutter);
+    QNetworkReply *setEV(float ev);
+    QNetworkReply *setFlipMirrorMode(FLIP_MIRROR_MODE mode);
+    QNetworkReply *startPreview();
     QNetworkAccessManager *m_networkManager;
+
 
 public slots:
 

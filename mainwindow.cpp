@@ -176,6 +176,9 @@ void MainWindow::on_verticalSlider_Y_valueChanged(int value)
 
 void MainWindow::on_pushButton_clicked()
 {
+
+    this->m_cam_controller->setAEMode(ui->comboBox_7->currentIndex());
+
     int iso_index = ui->comboBox_iso->currentIndex();
     this->m_cam_controller->setISO(iso_index);
 
@@ -186,6 +189,12 @@ void MainWindow::on_pushButton_clicked()
     int iso_value = get_iso_value(iso_index);
     float m_gain = (log2(0.32f * iso_value) - 4) * 6;
     this->m_cam_controller->setSensorGain(m_gain);
+
+    float ev = ui->comboBox_ev->currentIndex() - 2;
+    this->m_cam_controller->setEV(ev);
+
+//    this->m_cam_controller->startPreview();
+
     qDebug() << "gain = " << m_gain << " shutter = " << m_shutter;
 }
 
@@ -218,9 +227,15 @@ void MainWindow::setLocalJpegPath(QString path){
 }
 
 void MainWindow::onJpegDownloaded(QString full_path){
-    QString link_url = "<a href=\"" + full_path + "\">" + full_path;
+    QString link_url = "<a href=\"" + full_path + "\" style=\"color:rgb(85, 170, 255) \">" + full_path;
     ui->label_local_file_name->setText(link_url);
     this->m_webView->load(QUrl(full_path));
 }
 
 //void MainWindow::
+
+void MainWindow::on_checkBox_stateChanged(int arg1)
+{
+    this->m_cam_controller->setMShutter(arg1 != 0);
+}
+

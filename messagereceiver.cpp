@@ -1,5 +1,6 @@
 #include "messagereceiver.h"
 #include "QtDebug"
+#include <QString>
 
 
 MessageReceiver::MsgRecvThread::MsgRecvThread(MessageReceiver *receiver, QObject *parent){
@@ -18,7 +19,8 @@ void MessageReceiver::MsgRecvThread::run(){
     while (!this->threadAbort) {
         if(zmqSocket.recv(msg, zmq::recv_flags::dontwait)){
             qDebug() << "msg received " << msg.size();
-            emit receiver->messageReceived(QString(static_cast<const char*>(msg.data()))) ;
+            QString msg_str = QString::fromLocal8Bit(msg.data<const char>(), msg.size());
+            emit receiver->messageReceived(msg_str) ;
         }
     }
     zmqSocket.close();
