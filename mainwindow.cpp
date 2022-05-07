@@ -18,7 +18,7 @@ static int get_iso_value(int index){
 }
 
 void MainWindow::switchAEUIMode(int mode){
-    if(ui->comboBox_7->currentText() == "Mannual"){
+    if(ui->comboBox_7->currentText() == "Manual"){
         ui->label_shutter->show();
         ui->comboBox_shutter->show();
         ui->label_ev->hide();
@@ -36,7 +36,17 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->groupBox_histogram->hide();
+    ui->groupBox_debug->hide();
     this->m_cam_controller = new HttpCameraController(QString("http://192.168.137.16:8080/api/camera/"));
+
+    this->progressDialog = new QProgressDialog("processing...", QString(), 0, 1, this);
+    this->progressDialog->hide();
+
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(on_update_time()));
+    timer->start(1000);
+
     QObject::connect(this->m_cam_controller->m_networkManager,
                      &QNetworkAccessManager::finished,
                      this, [=](QNetworkReply *reply){
@@ -65,6 +75,10 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
+    for (QString str : AWB_SCENE_OPTIONS){
+        ui->comboBox_wb_scene->addItem(str);
+    }
+
     switchAEUIMode(ui->comboBox_7->currentIndex());
 
     receiver = new MessageReceiver();
@@ -83,14 +97,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_9_clicked()
 {
-    this->m_cam_controller->cameraIfDirect(0x0, 0xb, 0x2);
+    this->m_cam_controller->startPreview();
 }
 
 
 
 void MainWindow::on_pushButton_take_photo_clicked()
 {
-    this->m_cam_controller->cameraIfDirect(0x0, 0xb, 0x3);
+//    this->m_cam_controller->cameraIfDirect(0x0, 0xb, 0x3);
+    this->progressDialog->show();
+    this->setDisabled(true);
+    this->m_cam_controller->capturePic();
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
@@ -98,6 +117,8 @@ void MainWindow::on_pushButton_take_photo_clicked()
 
 void MainWindow::on_comboBox_2_currentIndexChanged(int index)
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     switch (index){
     case 1:
         this->m_cam_controller->cameraIfDirect(0x1, 0xc, E_FJ_MOVIE_VIDEO_SIZE_3840_2160);
@@ -142,67 +163,85 @@ void MainWindow::on_comboBox_2_currentIndexChanged(int index)
         this->m_cam_controller->cameraIfDirect(0xb, 0x1, 4096);
         break;
     }
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
 
 void MainWindow::on_horizontalSlider_2_valueChanged(int value)
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     this->m_cam_controller->cameraIfDirect(0xb, 0x6, value);
     ui->label_4->setText(QString(std::to_string(value).c_str()));
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
 void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     float zoom = 1.0f + 3.0f * value / 100;
-    this->m_cam_controller->cameraIfDirect(0x1, 0x21, *(uint32_t *)&zoom);
+    this->m_cam_controller->setDZoom(zoom);
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
 void MainWindow::on_horizontalSlider_x_valueChanged(int value)
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     float x = 1.0f * value / 100;
     this->m_cam_controller->cameraIfDirect(0x1, 0x22, *(uint32_t *)&x);
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
 void MainWindow::on_verticalSlider_Y_valueChanged(int value)
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     float y = 1.0f * value / 100;
     this->m_cam_controller->cameraIfDirect(0x1, 0x23, *(uint32_t *)&y);
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
 void MainWindow::on_pushButton_clicked()
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
 
-    this->m_cam_controller->setAEMode(ui->comboBox_7->currentIndex());
+    this->m_cam_controller->setAEMode(ui->comboBox_7->currentText());
 
-    int iso_index = ui->comboBox_iso->currentIndex();
-    this->m_cam_controller->setISO(iso_index);
+    this->m_cam_controller->setISO(ui->comboBox_iso->currentText().toInt());
 
-    int shutter_index = ui->comboBox_shutter->currentIndex();
-    float m_shutter = SHUTTER_VALUE[shutter_index];
-    this->m_cam_controller->setShutter(m_shutter);
+    this->m_cam_controller->setShutter(ui->comboBox_shutter->currentText());
 
-    int iso_value = get_iso_value(iso_index);
+    int iso_value = get_iso_value(ui->comboBox_iso->currentText().toInt());
     float m_gain = (log2(0.32f * iso_value) - 4) * 6;
     this->m_cam_controller->setSensorGain(m_gain);
 
     float ev = ui->comboBox_ev->currentIndex() - 2;
     this->m_cam_controller->setEV(ev);
 
-//    this->m_cam_controller->startPreview();
-
-    qDebug() << "gain = " << m_gain << " shutter = " << m_shutter;
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 
 void MainWindow::on_comboBox_7_activated(int index)
 {
     this->switchAEUIMode(index);
-    this->m_cam_controller->setAEMode(index);
+    this->setDisabled(false);
+    this->progressDialog->hide();
+//    this->m_cam_controller->setAEMode(index);
 }
 
 void MainWindow::onMqMsgReceived(QString msg){
@@ -218,7 +257,11 @@ void MainWindow::onMqMsgReceived(QString msg){
 
 void MainWindow::on_pushButton_2_clicked()
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     file_dialog->show();
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 
 void MainWindow::setLocalJpegPath(QString path){
@@ -236,6 +279,42 @@ void MainWindow::onJpegDownloaded(QString full_path){
 
 void MainWindow::on_checkBox_stateChanged(int arg1)
 {
+    this->progressDialog->show();
+    this->setDisabled(true);
     this->m_cam_controller->setMShutter(arg1 != 0);
+    this->setDisabled(false);
+    this->progressDialog->hide();
+}
+
+void MainWindow::on_update_time(){
+    ui->label_time->setText(QDate::currentDate().toString("yyyy-MM-dd") + QTime::currentTime().toString(" hh:mm:ss"));
+}
+
+void MainWindow::on_pushButton_sync_time_clicked()
+{
+    this->progressDialog->show();
+    this->setDisabled(true);
+    this->m_cam_controller->syncTime(QDate::currentDate().toString("yyyy-MM-dd") + QTime::currentTime().toString(" hh:mm:ss"));
+    this->setDisabled(false);
+    this->progressDialog->hide();
+}
+
+void MainWindow::on_comboBox_wb_scene_activated(int index)
+{
+    this->progressDialog->show();
+    this->setDisabled(true);
+    this->m_cam_controller->setAWBScene(index, 0);
+    this->setDisabled(false);
+    this->progressDialog->hide();
+}
+
+
+void MainWindow::on_comboBox_mode_activated(int index)
+{
+    this->progressDialog->show();
+    this->setDisabled(true);
+    this->m_cam_controller->setAWBMode(index);
+    this->setDisabled(false);
+    this->progressDialog->hide();
 }
 

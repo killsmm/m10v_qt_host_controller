@@ -4,7 +4,19 @@
 #include <QObject>
 #include <QtNetwork>
 
-#define API_CAMERA_IF_DIRECT "camera_if_direct"
+#define API_CAMERA_IF_DIRECT    "camera_if_direct"
+#define API_AUTO_ISO            "auto_iso"
+#define API_MANUAL_ISO          "manual_iso"
+#define API_SHUTTER_SPEED       "shutter_speed"
+#define API_AE_MODE             "ae_mode"
+#define API_OSD                 "osd"
+#define API_START_VIDEO         "start_video"
+#define API_STOP_VIDEO          "stop_video"
+#define API_SYNC_TIME           "sync_time"
+#define API_STORAGE_VIDEO       "storage_video"
+#define API_DIGITAL_ZOOM        "digital_zoom"
+#define API_TAKE_PHOTO          "take_photo"
+
 typedef enum {
     E_FJ_MOVIE_VIDEO_SIZE_4000_3000	= 0,	/**< 4000x3000 */
     E_FJ_MOVIE_VIDEO_SIZE_4096_2304	= 1,	/**< 4096x2304 */
@@ -60,8 +72,19 @@ typedef enum {
     FLIP_MIRROR_MODE_FLIP_MIRROR
 }FLIP_MIRROR_MODE;
 
+typedef enum {
+    AWB_SCENE_CLOUD = 1,
+    AWB_SCENE_DAYLIGHT,
+    AWB_SCENE_FLASH,
+    AWB_SCENE_COOL_WHITE,
+    AWB_SCENE_TUNGSTEN,
+    AWB_SCENE_CANDLELIGHT,
+    AWB_SCENE_HORIZON
+} AWB_SCENE;
+
 extern const std::vector<float> SHUTTER_VALUE;
 extern const std::vector<int> ISO_VALUE_INDEX;
+extern const std::vector<QString> AWB_SCENE_OPTIONS;
 
 
 class HttpCameraController : public QObject
@@ -70,21 +93,28 @@ class HttpCameraController : public QObject
 public:
     explicit HttpCameraController(QString api, QObject *parent = nullptr);
     QNetworkReply *cameraIfDirect(uint32_t cmd_set, uint32_t cmd, uint32_t value);
-    QNetworkReply *setAEMode(int mode);
-    QNetworkReply *setISO(int index);
-    QNetworkReply *setShutter(float shutter_sec);
+    QNetworkReply *setAEMode(QString mode);
+    QNetworkReply *setISO(int iso);
+    QNetworkReply *setShutter(QString shutter);
     QNetworkReply *setSensorGain(float gain);
     QNetworkReply *setMShutter(bool m_shutter);
     QNetworkReply *setEV(float ev);
     QNetworkReply *setFlipMirrorMode(FLIP_MIRROR_MODE mode);
     QNetworkReply *startPreview();
+    QNetworkReply *setPhotoPath(QString path, QString prefix);
+    QNetworkReply *syncTime(QString time);
+    QNetworkReply *setAWBScene(int scene, int value);
+    QNetworkReply *setAWBMode(int mode);
+    QNetworkReply *setDZoom(float zoom);
+    QNetworkReply *capturePic();
+    QNetworkReply *setJpegResolution();
     QNetworkAccessManager *m_networkManager;
 
 
 public slots:
 
 private:
-    QNetworkReply *post(QString api_name, QJsonObject json);
+    QNetworkReply *post(QString api_name, QJsonObject *json);
     QString m_api;
 signals:
 

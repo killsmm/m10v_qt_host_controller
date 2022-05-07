@@ -8,6 +8,7 @@
 #include <camerawebview.h>
 #include "messagereceiver.h"
 #include <QFileDialog>
+#include <QProgressDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -50,9 +51,15 @@ private slots:
 
     void onMqMsgReceived(QString msg);
     void on_pushButton_2_clicked();
-
+    void on_update_time();
 
     void on_checkBox_stateChanged(int arg1);
+
+    void on_pushButton_sync_time_clicked();
+
+    void on_comboBox_wb_scene_activated(int index);
+
+    void on_comboBox_mode_activated(int index);
 
 private:
     Ui::MainWindow *ui;
@@ -62,5 +69,6 @@ private:
     MessageReceiver *receiver;
     QFileDialog *file_dialog;
     QString jpeg_path;
+    QProgressDialog *progressDialog;
 };
 #endif // MAINWINDOW_H
