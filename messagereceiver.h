@@ -5,7 +5,7 @@
 #include "zmq.hpp"
 #include <QThread>
 
-#define MUTIMEDIA_SERVER_MQ "tcp://192.168.137.16:8888"
+#define MUTIMEDIA_SERVER_MQ "tcp://192.168.137.16:8101"
 
 class MessageReceiver : public QObject
 {
